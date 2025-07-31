@@ -22,6 +22,10 @@ Run the parser on a SEC filing PDF:
 python sec_metadata/parser.py path/to/filing.pdf --pages 1-5
 ```
 
+The `--pages` option accepts a single page number like `3` or a
+range such as `1-5`.  Numbers are 1-based and the range's start must
+not exceed its end.  Any other format will raise a `ValueError`.
+
 This will print a JSON structure containing the document's metadata along with any
 financial terms discovered in the given pages.
 
