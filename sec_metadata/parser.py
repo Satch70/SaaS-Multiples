@@ -15,30 +15,33 @@ TERM_RE = re.compile(r"(" + "|".join(re.escape(t) for t in FINANCIAL_TERMS) + r"
 
 
 def extract_financial_info(pdf_path: str, pages=None):
-    """Return document metadata and simple financial values."""
-    doc = pymupdf.open(pdf_path)
-    md_pages = pymupdf4llm.to_markdown(doc, pages=pages, page_chunks=True)
+    """Return document metadata and simple financial values.
 
-    results = {
-        "file_path": pdf_path,
-        "doc_metadata": doc.metadata,
-        "items": [],
-    }
+    The PDF file is opened using :func:`pymupdf.open` as a context manager.
+    """
+    with pymupdf.open(pdf_path) as doc:
+        md_pages = pymupdf4llm.to_markdown(doc, pages=pages, page_chunks=True)
 
-    for page in md_pages:
-        page_no = page["metadata"]["page_number"]
-        for line in page["text"].splitlines():
-            term_match = TERM_RE.search(line)
-            if term_match:
-                value_match = VALUE_RE.search(line)
-                if value_match:
-                    results["items"].append(
-                        {
-                            "page": page_no,
-                            "term": term_match.group(1).title(),
-                            "value": value_match.group(0),
-                        }
-                    )
+        results = {
+            "file_path": pdf_path,
+            "doc_metadata": doc.metadata,
+            "items": [],
+        }
+
+        for page in md_pages:
+            page_no = page["metadata"]["page_number"]
+            for line in page["text"].splitlines():
+                term_match = TERM_RE.search(line)
+                if term_match:
+                    value_match = VALUE_RE.search(line)
+                    if value_match:
+                        results["items"].append(
+                            {
+                                "page": page_no,
+                                "term": term_match.group(1).title(),
+                                "value": value_match.group(0),
+                            }
+                        )
     return results
 
 
