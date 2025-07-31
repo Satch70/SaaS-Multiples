@@ -10,7 +10,18 @@ FINANCIAL_TERMS = [
     "net loss",
 ]
 
-VALUE_RE = re.compile(r"\$?\(?\d{1,3}(?:,\d{3})*(?:\.\d+)?\)?")
+VALUE_RE = re.compile(
+    r"""
+    \$?  # optional dollar sign
+    (?:
+        -?\d+(?:,\d{3})*(?:\.\d+)?  # optional negative sign with digits
+        |\(
+            \d+(?:,\d{3})*(?:\.\d+)?  # digits enclosed in parentheses
+        \)
+    )
+    """,
+    re.VERBOSE,
+)
 TERM_RE = re.compile(r"(" + "|".join(re.escape(t) for t in FINANCIAL_TERMS) + r")", re.IGNORECASE)
 
 
