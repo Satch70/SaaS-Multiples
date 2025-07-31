@@ -1,7 +1,11 @@
 import json
+import logging
 import re
 import pymupdf
 import pymupdf4llm
+
+
+logger = logging.getLogger(__name__)
 
 
 FINANCIAL_TERMS = [
@@ -25,9 +29,19 @@ def extract_financial_info(pdf_path: str, pages=None):
         "items": [],
     }
 
-    for page in md_pages:
-        page_no = page["metadata"]["page_number"]
-        for line in page["text"].splitlines():
+    for idx, page in enumerate(md_pages):
+        if not isinstance(page, dict):
+            logger.warning("Page %s is not a dict: %r", idx, page)
+            continue
+
+        metadata = page.get("metadata", {})
+        page_no = metadata.get("page_number", idx + 1)
+        text = page.get("text")
+        if not isinstance(text, str):
+            logger.warning("Missing text for page %s", page_no)
+            continue
+
+        for line in text.splitlines():
             term_match = TERM_RE.search(line)
             if term_match:
                 value_match = VALUE_RE.search(line)
