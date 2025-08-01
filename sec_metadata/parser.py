@@ -26,7 +26,8 @@ def extract_financial_info(pdf_path: str, pages=None):
     }
 
     for page in md_pages:
-        page_no = page["metadata"]["page_number"]
+        meta = page.get("metadata", {})
+        page_no = meta.get("page_number") or meta.get("page")
         for line in page["text"].splitlines():
             term_match = TERM_RE.search(line)
             if term_match:

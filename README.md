@@ -25,3 +25,11 @@ python sec_metadata/parser.py path/to/filing.pdf --pages 1-5
 This will print a JSON structure containing the document's metadata along with any
 financial terms discovered in the given pages.
 
+
+## Running Tests
+
+After installing the requirements, run the test suite with:
+
+```bash
+pytest
+```
