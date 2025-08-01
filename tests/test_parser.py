@@ -46,3 +46,15 @@ def test_missing_metadata(monkeypatch):
     assert any(item['term'] == 'Total Revenue' for item in result['items'])
 
 
+def test_pdfminer_fallback(monkeypatch):
+    """If MuPDF cannot extract text, fall back to pdfminer."""
+
+    def boom(*args, **kwargs):  # force fallback
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(pymupdf4llm, "to_markdown", boom)
+    result = extract_financial_info(SAMPLE_PDF)
+    terms = {(item['term'], item['value']) for item in result['items']}
+    assert ('Total Revenue', '$10,000') in terms
+
+

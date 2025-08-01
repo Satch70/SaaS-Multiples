@@ -1,8 +1,10 @@
 import json
 import logging
 import re
+
 import pymupdf
 import pymupdf4llm
+from pdfminer.high_level import extract_text
 
 
 logger = logging.getLogger(__name__)
@@ -46,17 +48,25 @@ PERCENT_RE = re.compile(r"-?\d+(?:\.\d+)?%")
 def extract_financial_info(pdf_path: str, pages=None):
     """Return document metadata and simple financial values."""
     doc = pymupdf.open(pdf_path)
-    md_pages = pymupdf4llm.to_markdown(doc, pages=pages, page_chunks=True)
+    try:
+        md_pages = pymupdf4llm.to_markdown(doc, pages=pages, page_chunks=True)
+        if not any(page.get("text") for page in md_pages):
+            raise RuntimeError("empty")
+        metadata = doc.metadata
+    except Exception:
+        metadata = doc.metadata
+        text = extract_text(pdf_path, page_numbers=pages)
+        md_pages = [{"text": text, "metadata": {"page_number": 1}}]
 
     results = {
         "file_path": pdf_path,
-        "doc_metadata": doc.metadata,
+        "doc_metadata": metadata,
         "items": [],
     }
 
     for page in md_pages:
         meta = page.get("metadata", {})
-        page_no = meta.get("page_number") or meta.get("page")
+        page_no = meta.get("page_number") or meta.get("page") or 1
         for line in page["text"].splitlines():
             term_match = TERM_RE.search(line)
             if term_match:
