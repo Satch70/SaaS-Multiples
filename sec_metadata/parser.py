@@ -1,7 +1,11 @@
 import json
+import logging
 import re
 import pymupdf
 import pymupdf4llm
+
+
+logger = logging.getLogger(__name__)
 
 
 FINANCIAL_TERMS = [
@@ -10,7 +14,18 @@ FINANCIAL_TERMS = [
     "net loss",
 ]
 
-VALUE_RE = re.compile(r"\$?\(?\d{1,3}(?:,\d{3})*(?:\.\d+)?\)?")
+VALUE_RE = re.compile(
+    r"""
+    \$?  # optional dollar sign
+    (?:
+        -?\d+(?:,\d{3})*(?:\.\d+)?  # optional negative sign with digits
+        |\(
+            \d+(?:,\d{3})*(?:\.\d+)?  # digits enclosed in parentheses
+        \)
+    )
+    """,
+    re.VERBOSE,
+)
 TERM_RE = re.compile(r"(" + "|".join(re.escape(t) for t in FINANCIAL_TERMS) + r")", re.IGNORECASE)
 
 
@@ -44,9 +59,29 @@ def extract_financial_info(pdf_path: str, pages=None):
 
 
 def parse_page_range(page_range: str):
-    """Convert a 1-based page range like '1-3' to a list of 0-based pages."""
-    start, end = [int(p) for p in page_range.split("-", 1)]
-    return list(range(start - 1, end))
+    """Convert a page range string to a list of 0-based page numbers.
+
+    Accepted formats are a single integer (e.g. ``"3"``) or a range
+    ``"start-end"`` where both numbers are 1-based.  A single value will be
+    converted to the corresponding zero-based page index, while a range will
+    return all pages between ``start`` and ``end`` (inclusive).
+    """
+
+    page_range = page_range.strip()
+
+    # Single page specification like ``"3"``
+    if re.fullmatch(r"\d+", page_range):
+        return [int(page_range) - 1]
+
+    # Range specification like ``"1-5"``
+    m = re.fullmatch(r"(\d+)\s*-\s*(\d+)", page_range)
+    if m:
+        start, end = int(m.group(1)), int(m.group(2))
+        if start > end:
+            raise ValueError(f"page range start {start} is greater than end {end}")
+        return list(range(start - 1, end))
+
+    raise ValueError(f"Unrecognized page range format: '{page_range}'")
 
 
 if __name__ == "__main__":

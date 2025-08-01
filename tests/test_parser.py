@@ -34,3 +34,4 @@ def test_missing_metadata(monkeypatch):
     # terms should still be extracted
     assert any(item['term'] == 'Total Revenue' for item in result['items'])
 
+
