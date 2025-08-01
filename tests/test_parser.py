@@ -11,22 +11,33 @@ from sec_metadata import extract_financial_info
 SAMPLE_PDF = os.path.join(os.path.dirname(__file__), 'data', 'sample.pdf')
 
 
-def test_extract_financial_info_success():
+def test_extract_financial_info_success(monkeypatch):
+    def fake_to_markdown(doc, *args, **kwargs):
+        return [
+            {
+                "text": "Total Revenue $10,000\nNet Income $2,000",
+                "metadata": {"page": 1},
+            }
+        ]
+
+    monkeypatch.setattr(pymupdf4llm, "to_markdown", fake_to_markdown)
     result = extract_financial_info(SAMPLE_PDF)
     assert result['doc_metadata']['title'] == 'Sample Filing'
     terms = {(item['term'], item['value']) for item in result['items']}
     assert ('Total Revenue', '$10,000') in terms
     assert ('Net Income', '$2,000') in terms
+    assert 'Ebitda' in result['missing_terms']
 
 
 def test_missing_metadata(monkeypatch):
-    real_to_md = pymupdf4llm.to_markdown
-
     def fake_to_markdown(doc, *args, **kwargs):
-        result = real_to_md(doc, *args, **kwargs)
-        # simulate missing metadata after extraction
         doc.metadata = {}
-        return result
+        return [
+            {
+                "text": "Total Revenue $10,000\nNet Income $2,000",
+                "metadata": {},
+            }
+        ]
 
     monkeypatch.setattr(pymupdf4llm, "to_markdown", fake_to_markdown)
     result = extract_financial_info(SAMPLE_PDF)

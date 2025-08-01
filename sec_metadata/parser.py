@@ -12,6 +12,18 @@ FINANCIAL_TERMS = [
     "total revenue",
     "net income",
     "net loss",
+    "ebitda",
+    "operating income",
+    "debt",
+    "cash and cash equivalents",
+    "annual recurring revenue",
+    "monthly recurring revenue",
+    "gross churn rate",
+    "net churn rate",
+    "expansion mrr",
+    "expansion arr",
+    "sales and marketing",
+    "customer acquisition cost",
 ]
 
 VALUE_RE = re.compile(
@@ -27,6 +39,8 @@ VALUE_RE = re.compile(
     re.VERBOSE,
 )
 TERM_RE = re.compile(r"(" + "|".join(re.escape(t) for t in FINANCIAL_TERMS) + r")", re.IGNORECASE)
+
+PERCENT_RE = re.compile(r"-?\d+(?:\.\d+)?%")
 
 
 def extract_financial_info(pdf_path: str, pages=None):
@@ -46,7 +60,7 @@ def extract_financial_info(pdf_path: str, pages=None):
         for line in page["text"].splitlines():
             term_match = TERM_RE.search(line)
             if term_match:
-                value_match = VALUE_RE.search(line)
+                value_match = VALUE_RE.search(line) or PERCENT_RE.search(line)
                 if value_match:
                     results["items"].append(
                         {
@@ -55,6 +69,8 @@ def extract_financial_info(pdf_path: str, pages=None):
                             "value": value_match.group(0),
                         }
                     )
+    found_terms = {item["term"].lower() for item in results["items"]}
+    results["missing_terms"] = [t.title() for t in FINANCIAL_TERMS if t.lower() not in found_terms]
     return results
 
 
