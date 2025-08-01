@@ -29,3 +29,11 @@ not exceed its end.  Any other format will raise a `ValueError`.
 This will print a JSON structure containing the document's metadata along with any
 financial terms discovered in the given pages.
 
+
+## Running Tests
+
+After installing the requirements, run the test suite with:
+
+```bash
+pytest
+```
