@@ -41,7 +41,12 @@ def prompt_metrics(data_by_year: Dict[str, Dict[str, str]]):
     return results
 
 
-def write_report(company: str, data_by_year: Dict[str, Dict[str, str]], metrics: Dict[str, Dict[str, float]], folder: Path) -> Path:
+def write_report(
+    company: str,
+    data_by_year: Dict[str, Dict[str, str]],
+    metrics: Dict[str, Dict[str, float]],
+    folder: Path,
+) -> Path:
     report_path = folder / "report.md"
     years = _sorted_years(data_by_year)
     with report_path.open("w", encoding="utf-8") as f:
