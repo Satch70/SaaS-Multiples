@@ -42,6 +42,19 @@ not exceed its end.  Any other format will raise a `ValueError`.
 This will print a JSON structure containing the document's metadata along with any
 financial terms discovered in the given pages.
 
+### Multi-company metrics
+
+To compare SaaS metrics across multiple companies, set an
+Alpha Vantage API key in the environment and run the table generator:
+
+```bash
+export ALPHAVANTAGE_API_KEY=your_key
+python metrics_table.py AAPL MSFT --out metrics.csv
+```
+
+The command writes a CSV file and a Markdown companion containing values
+for metrics such as MRR, churn, LTV, CAC, and more.
+
 
 ## Running Tests
 
