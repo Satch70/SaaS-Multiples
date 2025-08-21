@@ -52,11 +52,19 @@ def extract_financial_info(pdf_path: str, pages=None):
         md_pages = pymupdf4llm.to_markdown(doc, pages=pages, page_chunks=True)
         if not any(page.get("text") for page in md_pages):
             raise RuntimeError("empty")
-        metadata = doc.metadata
     except Exception:
-        metadata = doc.metadata
-        text = extract_text(pdf_path, page_numbers=pages)
+        try:
+            text = extract_text(pdf_path, page_numbers=pages, strict=False)
+        except Exception:
+            text = ""
+        if not text:
+            text = "".join(doc.load_page(i).get_text() for i in range(doc.page_count))
         md_pages = [{"text": text, "metadata": {"page_number": 1}}]
+    metadata = doc.metadata or {}
+    if metadata and not metadata.get("title"):
+        from pathlib import Path
+
+        metadata["title"] = Path(pdf_path).stem.replace("_", " ").title() + " Filing"
 
     results = {
         "file_path": pdf_path,

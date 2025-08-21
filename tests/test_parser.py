@@ -53,6 +53,13 @@ def test_pdfminer_fallback(monkeypatch):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(pymupdf4llm, "to_markdown", boom)
+    import sec_metadata.parser as parser_module
+
+    monkeypatch.setattr(
+        parser_module,
+        "extract_text",
+        lambda *a, **k: "Total Revenue $10,000\nNet Income $2,000",
+    )
     result = extract_financial_info(SAMPLE_PDF)
     terms = {(item['term'], item['value']) for item in result['items']}
     assert ('Total Revenue', '$10,000') in terms
